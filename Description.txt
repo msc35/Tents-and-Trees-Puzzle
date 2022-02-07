@@ -1,0 +1,10 @@
+Solution of the problem below with Xpress Solver.
+
+
+Tents and Trees
+It is hot in the holidays, and the campground is full of guests. Eveybody wants a spot in the shade of one of the nice trees that are scattered over the ground, but no-one likes to be too close to his neighbours.
+
+Next to every tree there will have to be put a tent, either horizontally or vertically. Tents do not touch each other, not even diagonally. The numbers next to and below the diagram indicate how many tents there are in that particular row or column.
+
+
+This genre was invented by Léon Balmaekers and was first published in the Dutch puzzle magazine Breinbrekers in 1989, where it was named "Alle ballen verzamelen".

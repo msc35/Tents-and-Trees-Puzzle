@@ -1,0 +1,131 @@
+!@encoding CP1254
+model ModelName
+uses "mmxprs"; !gain access to the Xpress-Optimizer solver
+
+!optional parameters section
+parameters
+!  SAMPLEPARAM1='c:\test\'
+!  SAMPLEPARAM2=false
+   PROJECTDIR='' ! for when file is added to project
+   
+end-parameters
+
+!sample declarations section
+declarations
+! ...
+m = 45 ! Number of trees
+n = 15 ! n x n boxes
+I = 0..n+1 ! Row with extras
+J = 0..n+1 ! Column with extras
+I2 = 1..n !Rows 
+J2 = 1..n !Columns
+r:array(I) of integer
+c:array(J) of integer
+t:array(I,J)of integer
+
+
+y : array(I,J,I,J) of mpvar
+x : array (I,J) of mpvar
+  Objective:linctr
+end-declarations
+
+r :: [0,3,3,3,4,2,4,2,5,2,1,5,1,4,4,2,0]
+c :: [0,5,2,3,2,4,2,4,2,3,3,4,3,3,2,3,0]
+
+t :: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	  0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,
+	  0,1,0,1,0,0,0,0,0,0,1,0,0,1,0,0,0,
+	  0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
+	  0,0,0,0,1,0,1,0,0,1,0,0,0,0,1,0,0,
+	  0,0,0,1,1,0,0,0,0,0,0,1,0,0,1,0,0,
+	  0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,
+	  0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,0,0,
+	  0,1,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,
+	  0,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,
+	  0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,
+	  0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,
+	  0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,
+	  0,0,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,
+	  0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,
+	  0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,
+	  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+
+
+! Constraints:
+
+
+forall(k in I2, l in J2)
+	y(k+1,l,k,l)+y(k-1,l,k,l)+y(k,l+1,k,l)+y(k,l-1,k,l)=t(k,l)
+
+forall(i in I2, j in J2, k in I2, l in J2)
+	y(i,j,k,l)<=x(i,j)
+
+forall(k in I2, l in J2)
+	y(k,l,k+1,l)+y(k,l,k-1,l)+y(k,l,k,l+1)+y(k,l,k,l-1)=x(k,l)
+
+forall(i in I2, j in J2)
+	t(i,j)+x(i,j)<=1
+
+forall(i in I, j in J, k in I, l in J)
+	y(i,j,k,l)<=x(i,j)*t(k,l)
+
+forall(i in I2, j in J2)
+	sum(k in I2, l in J2)y(i,j,k,l)<=1
+
+forall(k in I2, l in J2)
+	sum(i in I2, j in J2)y(i,j,k,l)<=1
+	
+sum(i in I2,j in J2)x(i,j) = m
+
+forall(j in J)
+	c(j) = sum(i in I)x(i,j)
+
+forall(i in I)
+	r(i) = sum(j in J)x(i,j)
+
+forall(i in I2, j in J2)
+	x(i,j) + x(i+1,j) + x(i+1,j+1) + x(i,j+1) <= 1
+
+forall(i in I2, j in J2)
+	x(i+1,j) + x(i-1,j) + x(i,j+1) + x(i,j-1) >= t(i,j)
+	
+forall(i in I2, j in J2)
+	t(i+1,j) + t(i-1,j) + t(i,j+1) + t(i,j-1) >= x(i,j)	
+
+
+forall(i in I2, j in J2)
+	x(i,j) is_binary
+
+forall(i in I2, j in J2,k in I2, l in J2)
+	y(i,j,k,l) is_binary
+
+
+
+obj:= sum(i in I, j in J)x(i,j)
+
+minimize(obj)
+
+
+
+
+if PROJECTDIR <> '' then
+  setparam('workdir', PROJECTDIR)
+  writeln("Project directory: " + PROJECTDIR)
+end-if
+
+
+
+writeln("Begin running model")
+
+!...
+forall(i in I, j in J)
+	if (getsol(x(i,j))=1) then
+		writeln("x(",i,",",j,")=",getsol(x(i,j)))
+	end-if
+	
+forall(i in I, j in J,k in I, l in J)
+	if (getsol(y(i,j,k,l)) = 1) then
+		writeln("y(",i,",",j,",",k,",",l,")=", getsol(y(i,j,k,l)))
+	end-if
+end-model
